@@ -5,9 +5,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Entrar a jugar</title>
   <script>
-    let mesas = JSON.parse(localStorage.getItem('mesas')) || [];
-
     document.addEventListener('DOMContentLoaded', () => {
+      // Obtener las mesas del localStorage
+      const mesas = JSON.parse(localStorage.getItem('mesas')) || [];
+
       const listaMesas = document.getElementById('lista-mesas');
       mesas.forEach(mesa => {
         const li = document.createElement('li');
