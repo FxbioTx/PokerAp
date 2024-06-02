@@ -19,8 +19,6 @@
   <!-- Incluir Firebase -->
   <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-database-compat.js"></script>
-  <!-- Incluir SimplePeer -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/simple-peer/9.10.0/simplepeer.min.js"></script>
 </head>
 <body>
   <h1>Bienvenido</h1>
@@ -40,7 +38,6 @@
   <!-- Crear una mesa -->
   <div id="create-room">
     <input type="text" id="room-name" placeholder="Nombre de la mesa">
-    <input type="text" id="room-password" placeholder="Contraseña de la mesa">
     <button onclick="createRoom()">Crear</button>
   </div>
 
@@ -51,8 +48,7 @@
 
   <!-- Sala de juego -->
   <div id="game-room">
-    <video id="localVideo" autoplay muted></video>
-    <video id="remoteVideo" autoplay></video>
+    <p>Estás en la mesa: <span id="current-room"></span></p>
     <button onclick="leaveRoom()">Abandonar mesa</button>
     <p id="lastToLeaveMessage" style="display: none;">La mesa se eliminará al salir.</p>
   </div>
@@ -100,19 +96,17 @@
 
     function createRoom() {
       const roomName = document.getElementById('room-name').value;
-      const roomPassword = document.getElementById('room-password').value;
-      if (roomName && roomPassword) {
+      if (roomName) {
         currentRoom = roomName;
         const roomData = {
           roomName: roomName,
-          roomPassword: roomPassword,
           createdBy: username,
           createdAt: firebase.database.ServerValue.TIMESTAMP
         };
         database.ref('rooms/' + roomName).set(roomData);
         joinRoom();
       } else {
-        alert('Por favor, introduce un nombre y una contraseña para la mesa.');
+        alert('Por favor, introduce un nombre para la mesa.');
       }
     }
 
@@ -139,44 +133,25 @@
       joinRoom();
     }
 
-    async function joinRoom() {
+    function joinRoom() {
       document.getElementById('create-room').style.display = 'none';
       document.getElementById('join-game').style.display = 'none';
       document.getElementById('game-room').style.display = 'flex';
+      document.getElementById('current-room').innerText = currentRoom;
 
-      // Iniciar WebRTC
-      const localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
-      document.getElementById('localVideo').srcObject = localStream;
-      const localPeer = new SimplePeer({ initiator: location.hash === '#init', trickle: false, stream: localStream });
-
-      localPeer.on('signal', data => {
-        database.ref('rooms/' + currentRoom + '/signals/' + username).set(data);
-      });
-
-      database.ref('rooms/' + currentRoom + '/signals').on('child_added', snapshot => {
-        const data = snapshot.val();
-        if (data.username !== username) {
-          localPeer.signal(data);
-        }
-      });
-
-      localPeer.on('stream', stream => {
-        document.getElementById('remoteVideo').srcObject = stream;
-      });
+      // Conectarse a Firebase para actualizaciones en tiempo real
+      database.ref('rooms/' + currentRoom).onDisconnect().remove();
     }
 
     function leaveRoom() {
-      database.ref('rooms/' + currentRoom + '/signals/' + username).remove();
-      database.ref('rooms/' + currentRoom + '/signals').once('value', snapshot => {
-        if (!snapshot.exists()) {
-          database.ref('rooms/' + currentRoom).remove();
-          document.getElementById('lastToLeaveMessage').style.display = 'none';
-        }
-      });
+      database.ref('rooms/' + currentRoom).remove();
       document.getElementById('game-room').style.display = 'none';
       document.getElementById('join-room').style.display = 'flex';
       document.getElementById('lastToLeaveMessage').style.display = 'block';
     }
+
+    // Mostrar la pantalla inicial
+    document.getElementById('join-room').style.display = 'flex';
   </script>
 </body>
 </html>
