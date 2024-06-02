@@ -6,10 +6,8 @@
   <title>Entrar a jugar</title>
   <script>
     document.addEventListener('DOMContentLoaded', () => {
-      const mesas = [
-        { nombre: 'Mesa 1', contrasena: '1234' },
-        { nombre: 'Mesa 2', contrasena: '5678' },
-      ];
+      // Obtener las mesas del localStorage
+      const mesas = JSON.parse(localStorage.getItem('mesas')) || [];
 
       const listaMesas = document.getElementById('lista-mesas');
       mesas.forEach(mesa => {
@@ -24,7 +22,15 @@
           const contrasena = prompt('Introduce la contraseña para eliminar la mesa:');
           if (contrasena === mesa.contrasena) {
             alert(`Mesa ${mesa.nombre} eliminada.`);
-            li.remove();
+            // Eliminar la mesa del array
+            const index = mesas.findIndex(m => m.nombre === mesa.nombre && m.contrasena === m.contrasena);
+            if (index > -1) {
+              mesas.splice(index, 1);
+              // Actualizar el localStorage
+              localStorage.setItem('mesas', JSON.stringify(mesas));
+              // Eliminar el elemento de la lista
+              li.remove();
+            }
           } else {
             alert('Contraseña incorrecta.');
           }
