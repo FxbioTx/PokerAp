@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -7,75 +7,73 @@
   <style>
     body {
       font-family: Arial, sans-serif;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      height: 100vh;
-      margin: 0;
-      background-color: #f4f4f4;
     }
-    #join-room, #create-room, #game-room {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-    }
-    input, select {
-      margin: 10px 0;
-      padding: 10px;
-      font-size: 16px;
-    }
-    button {
-      padding: 10px 20px;
-      font-size: 16px;
-      cursor: pointer;
-    }
-    #game-room {
+    #join-room, #room-options, #create-room, #join-game, #game-room {
       display: none;
+    }
+    #room-options, #create-room, #join-game, #game-room {
       flex-direction: column;
-      align-items: center;
+      gap: 10px;
     }
   </style>
-  <script src="https://unpkg.com/simple-peer@latest/simplepeer.min.js"></script>
+  <!-- Incluir Firebase -->
+  <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-database-compat.js"></script>
+  <!-- Incluir SimplePeer -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/simple-peer/9.10.0/simplepeer.min.js"></script>
 </head>
 <body>
+  <h1>Bienvenido</h1>
+
+  <!-- Sección para unirse -->
   <div id="join-room">
-    <h1>Bienvenido</h1>
     <input type="text" id="username" placeholder="Introduce tu nombre">
     <button onclick="showRoomOptions()">Continuar</button>
   </div>
 
-  <div id="room-options" style="display: none;">
-    <h1>Elige una opción</h1>
+  <!-- Opciones de crear o unirse a una mesa -->
+  <div id="room-options" style="display: flex;">
     <button onclick="showCreateRoom()">Crear mesa</button>
     <button onclick="showJoinGame()">Entrar a jugar</button>
   </div>
 
-  <div id="create-room" style="display: none;">
-    <h1>Crear mesa</h1>
+  <!-- Crear una mesa -->
+  <div id="create-room">
     <input type="text" id="room-name" placeholder="Nombre de la mesa">
-    <input type="password" id="room-password" placeholder="Contraseña">
+    <input type="text" id="room-password" placeholder="Contraseña de la mesa">
     <button onclick="createRoom()">Crear</button>
   </div>
 
-  <div id="join-game" style="display: none;">
-    <h1>Entrar a jugar</h1>
+  <!-- Unirse a un juego -->
+  <div id="join-game">
     <div id="room-list"></div>
-    <button onclick="fetchRooms()">Actualizar</button>
   </div>
 
+  <!-- Sala de juego -->
   <div id="game-room">
-    <h1>Sala de Juego</h1>
-    <video id="localVideo" autoplay></video>
+    <video id="localVideo" autoplay muted></video>
     <video id="remoteVideo" autoplay></video>
-    <button onclick="leaveRoom()">Salir de la Sala</button>
+    <button onclick="leaveRoom()">Abandonar mesa</button>
   </div>
 
   <script>
+    // Configuración de Firebase
+    const firebaseConfig = {
+      apiKey: "AIzaSyDHrSTj1-88cT39dMbKYxSLyO5_fgsws-Y",
+      authDomain: "fxbio-c7342.firebaseapp.com",
+      databaseURL: "https://fxbio-c7342-default-rtdb.firebaseio.com",
+      projectId: "fxbio-c7342",
+      storageBucket: "fxbio-c7342.appspot.com",
+      messagingSenderId: "1054457224265",
+      appId: "1:1054457224265:web:11d180732fec716d60b398",
+      measurementId: "G-Y0CB22WCWX"
+    };
+
+    // Inicializar Firebase
+    firebase.initializeApp(firebaseConfig);
+    const database = firebase.database();
+
     let username;
-    let chatRoom;
-    let localPeer;
-    let localStream;
     let currentRoom;
 
     function showRoomOptions() {
@@ -104,6 +102,13 @@
       const roomPassword = document.getElementById('room-password').value;
       if (roomName && roomPassword) {
         currentRoom = roomName;
+        const roomData = {
+          roomName: roomName,
+          roomPassword: roomPassword,
+          createdBy: username,
+          createdAt: firebase.database.ServerValue.TIMESTAMP
+        };
+        database.ref('rooms/' + roomName).set(roomData);
         joinRoom();
       } else {
         alert('Por favor, introduce un nombre y una contraseña para la mesa.');
@@ -111,9 +116,25 @@
     }
 
     function fetchRooms() {
-      // Esto es solo un placeholder para la lógica real de obtener las mesas disponibles.
       const roomList = document.getElementById('room-list');
-      roomList.innerHTML = '<p>Lista de mesas disponibles (placeholder)</p>';
+      roomList.innerHTML = '';
+
+      database.ref('rooms').once('value', snapshot => {
+        snapshot.forEach(roomSnapshot => {
+          const roomData = roomSnapshot.val();
+          const roomItem = document.createElement('div');
+          roomItem.innerHTML = `
+            <p>${roomData.roomName}</p>
+            <button onclick="joinExistingRoom('${roomData.roomName}')">Unirse</button>
+          `;
+          roomList.appendChild(roomItem);
+        });
+      });
+    }
+
+    function joinExistingRoom(roomName) {
+      currentRoom = roomName;
+      joinRoom();
     }
 
     async function joinRoom() {
@@ -122,29 +143,33 @@
       document.getElementById('game-room').style.display = 'flex';
 
       // Iniciar WebRTC
-      localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+      const localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
       document.getElementById('localVideo').srcObject = localStream;
-      localPeer = new SimplePeer({ initiator: location.hash === '#init', trickle: false, stream: localStream });
+      const localPeer = new SimplePeer({ initiator: location.hash === '#init', trickle: false, stream: localStream });
 
       localPeer.on('signal', data => {
-        chatRoom.send(JSON.stringify(data));
+        database.ref('rooms/' + currentRoom + '/signals/' + username).set(data);
+      });
+
+      database.ref('rooms/' + currentRoom + '/signals').on('child_added', snapshot => {
+        const data = snapshot.val();
+        if (data.username !== username) {
+          localPeer.signal(data);
+        }
       });
 
       localPeer.on('stream', stream => {
         document.getElementById('remoteVideo').srcObject = stream;
       });
-
-      // Iniciar WebSocket
-      chatRoom = new WebSocket('ws://echo.websocket.org');
-      chatRoom.onmessage = event => {
-        const data = JSON.parse(event.data);
-        localPeer.signal(data);
-      };
     }
 
     function leaveRoom() {
-      chatRoom.close();
-      localPeer.destroy();
+      database.ref('rooms/' + currentRoom + '/signals/' + username).remove();
+      database.ref('rooms/' + currentRoom + '/signals').once('value', snapshot => {
+        if (!snapshot.exists()) {
+          database.ref('rooms/' + currentRoom).remove();
+        }
+      });
       document.getElementById('game-room').style.display = 'none';
       document.getElementById('join-room').style.display = 'flex';
     }
