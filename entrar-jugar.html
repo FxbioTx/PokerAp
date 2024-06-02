@@ -5,38 +5,17 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Entrar a jugar</title>
   <script>
-    document.addEventListener('DOMContentLoaded', () => {
-      // Obtener las mesas del localStorage
-      const mesas = JSON.parse(localStorage.getItem('mesas')) || [];
+    let mesas = JSON.parse(localStorage.getItem('mesas')) || [];
 
+    document.addEventListener('DOMContentLoaded', () => {
       const listaMesas = document.getElementById('lista-mesas');
       mesas.forEach(mesa => {
         const li = document.createElement('li');
         li.textContent = `${mesa.nombre}`;
         const entrarBtn = document.createElement('button');
         entrarBtn.textContent = 'Entrar';
-        entrarBtn.onclick = () => window.location.href = `mesa-juego.html?nombreMesa=${mesa.nombre}&contrasenaMesa=${mesa.contrasena}`;
-        const eliminarBtn = document.createElement('button');
-        eliminarBtn.textContent = 'Eliminar';
-        eliminarBtn.onclick = () => {
-          const contrasena = prompt('Introduce la contraseña para eliminar la mesa:');
-          if (contrasena === mesa.contrasena) {
-            alert(`Mesa ${mesa.nombre} eliminada.`);
-            // Eliminar la mesa del array
-            const index = mesas.findIndex(m => m.nombre === mesa.nombre && m.contrasena === m.contrasena);
-            if (index > -1) {
-              mesas.splice(index, 1);
-              // Actualizar el localStorage
-              localStorage.setItem('mesas', JSON.stringify(mesas));
-              // Eliminar el elemento de la lista
-              li.remove();
-            }
-          } else {
-            alert('Contraseña incorrecta.');
-          }
-        };
+        entrarBtn.onclick = () => window.location.href = `mesa-juego.html?nombreMesa=${mesa.nombre}`;
         li.appendChild(entrarBtn);
-        li.appendChild(eliminarBtn);
         listaMesas.appendChild(li);
       });
     });

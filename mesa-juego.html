@@ -5,23 +5,41 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Mesa de Juego</title>
   <script>
-    function obtenerParametrosUrl() {
-      const params = new URLSearchParams(window.location.search);
-      return {
-        nombreMesa: params.get('nombreMesa'),
-        contrasenaMesa: params.get('contrasenaMesa')
-      };
+    let mesas = JSON.parse(localStorage.getItem('mesas')) || [];
+    let nombreMesa = new URLSearchParams(window.location.search).get('nombreMesa');
+    let mesaActual = mesas.find(mesa => mesa.nombre === nombreMesa);
+    let jugador = prompt('Introduce tu nombre de jugador:');
+
+    function actualizarMesas() {
+      localStorage.setItem('mesas', JSON.stringify(mesas));
+    }
+
+    function abandonarMesa() {
+      mesaActual.jugadores = mesaActual.jugadores.filter(j => j !== jugador);
+      if (mesaActual.jugadores.length === 0) {
+        alert('La mesa se eliminará al salir.');
+        mesas = mesas.filter(m => m !== mesaActual);
+      }
+      actualizarMesas();
+      window.location.href = 'entrar-jugar.html';
     }
 
     document.addEventListener('DOMContentLoaded', () => {
-      const { nombreMesa } = obtenerParametrosUrl();
-      document.getElementById('nombre-mesa').textContent = nombreMesa;
+      if (mesaActual) {
+        mesaActual.jugadores.push(jugador);
+        actualizarMesas();
+        document.getElementById('nombre-mesa').textContent = nombreMesa;
+      } else {
+        alert('Mesa no encontrada.');
+        window.location.href = 'entrar-jugar.html';
+      }
     });
   </script>
 </head>
 <body>
   <h1>Mesa de Juego: <span id="nombre-mesa"></span></h1>
   <p>Aquí es donde los jugadores jugarán.</p>
-  <!-- Aquí agregarás la funcionalidad para el juego -->
+  <button onclick="abandonarMesa()">Abandonar mesa</button>
+  <p id="mensaje-salida" style="display:none;">La mesa se eliminará al salir.</p>
 </body>
 </html>

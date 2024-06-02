@@ -5,25 +5,18 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Crear Mesa de Juego</title>
   <script>
+    let mesas = JSON.parse(localStorage.getItem('mesas')) || [];
+
     function crearMesa(event) {
       event.preventDefault();
       const nombreMesa = document.getElementById('nombre-mesa').value;
       const contrasenaMesa = document.getElementById('contrasena-mesa').value;
 
       if (nombreMesa && contrasenaMesa) {
-        // Obtener las mesas existentes del localStorage
-        let mesas = JSON.parse(localStorage.getItem('mesas')) || [];
-        
-        // Agregar la nueva mesa
-        mesas.push({ nombre: nombreMesa, contrasena: contrasenaMesa });
-        
-        // Guardar las mesas actualizadas en localStorage
+        mesas.push({ nombre: nombreMesa, contrasena: contrasenaMesa, jugadores: [] });
         localStorage.setItem('mesas', JSON.stringify(mesas));
-
         alert(`Mesa creada: ${nombreMesa} con contraseña: ${contrasenaMesa}`);
-        
-        // Redirigir a la página de juego, pasando el nombre y la contraseña como parámetros en la URL
-        window.location.href = `mesa-juego.html?nombreMesa=${nombreMesa}&contrasenaMesa=${contrasenaMesa}`;
+        window.location.href = `mesa-juego.html?nombreMesa=${nombreMesa}`;
       } else {
         alert('Por favor, completa todos los campos.');
       }
