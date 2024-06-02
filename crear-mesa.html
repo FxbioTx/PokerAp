@@ -4,10 +4,26 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Crear Mesa de Juego</title>
+  <script>
+    // JavaScript para manejar la creación de la mesa
+    function crearMesa(event) {
+      event.preventDefault();
+      const nombreMesa = document.getElementById('nombre-mesa').value;
+      const contrasenaMesa = document.getElementById('contrasena-mesa').value;
+
+      if (nombreMesa && contrasenaMesa) {
+        // Aquí puedes agregar la lógica para guardar la mesa creada, por ahora solo mostramos un mensaje
+        alert(`Mesa creada: ${nombreMesa} con contraseña: ${contrasenaMesa}`);
+        // Redirigir a otra página si es necesario
+      } else {
+        alert('Por favor, completa todos los campos.');
+      }
+    }
+  </script>
 </head>
 <body>
   <h1>Crear una mesa de juego</h1>
-  <form>
+  <form onsubmit="crearMesa(event)">
     <label for="nombre-mesa">Nombre de la mesa:</label>
     <input type="text" id="nombre-mesa" name="nombre-mesa" required><br>
     <label for="contrasena-mesa">Contraseña:</label>
