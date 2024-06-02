@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PokerAp</title>
+</head>
+<body>
+  <h1>Bienvenido a PokerAp</h1>
+  <p>Ingresa tu nombre para empezar:</p>
+  <form id="nameForm">
+    <input type="text" id="nameInput" placeholder="Tu nombre">
+    <button type="submit">Entrar</button>
+  </form>
+  <div id="gameArea" style="display: none;">
+    <h2>Hola, <span id="playerName"></span>!</h2>
+    <p>Aquí irá el juego de póker.</p>
+  </div>
+  <script>
+    document.getElementById('nameForm').addEventListener('submit', function(event) {
+      event.preventDefault();
+      const name = document.getElementById('nameInput').value;
+      document.getElementById('playerName').innerText = name;
+      document.getElementById('gameArea').style.display = 'block';
+      document.getElementById('nameForm').style.display = 'none';
+    });
+  </script>
+</body>
+</html>
