@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mesa de Juego</title>
+  <script>
+    function obtenerParametrosUrl() {
+      const params = new URLSearchParams(window.location.search);
+      return {
+        nombreMesa: params.get('nombreMesa'),
+        contrasenaMesa: params.get('contrasenaMesa')
+      };
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      const { nombreMesa } = obtenerParametrosUrl();
+      document.getElementById('nombre-mesa').textContent = nombreMesa;
+    });
+  </script>
+</head>
+<body>
+  <h1>Mesa de Juego: <span id="nombre-mesa"></span></h1>
+  <p>Aquí es donde los jugadores jugarán.</p>
+  <!-- Aquí agregarás la funcionalidad para el juego -->
+</body>
+</html>

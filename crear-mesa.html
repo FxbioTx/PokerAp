@@ -12,6 +12,8 @@
 
       if (nombreMesa && contrasenaMesa) {
         alert(`Mesa creada: ${nombreMesa} con contraseña: ${contrasenaMesa}`);
+        // Redirigir a la página de juego, pasando el nombre y la contraseña como parámetros en la URL
+        window.location.href = `mesa-juego.html?nombreMesa=${nombreMesa}&contrasenaMesa=${contrasenaMesa}`;
       } else {
         alert('Por favor, completa todos los campos.');
       }
