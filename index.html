@@ -15,12 +15,12 @@
       margin: 0;
       background-color: #f4f4f4;
     }
-    #join-room {
+    #join-room, #create-room, #game-room {
       display: flex;
       flex-direction: column;
       align-items: center;
     }
-    input {
+    input, select {
       margin: 10px 0;
       padding: 10px;
       font-size: 16px;
@@ -30,31 +30,10 @@
       font-size: 16px;
       cursor: pointer;
     }
-    #chat-room {
+    #game-room {
       display: none;
       flex-direction: column;
       align-items: center;
-    }
-    #messages {
-      width: 80%;
-      max-width: 600px;
-      height: 400px;
-      overflow-y: scroll;
-      border: 1px solid #ccc;
-      margin: 10px 0;
-      padding: 10px;
-      background-color: white;
-    }
-    #new-message {
-      display: flex;
-      justify-content: space-between;
-      width: 80%;
-      max-width: 600px;
-    }
-    video {
-      width: 80%;
-      max-width: 600px;
-      background-color: black;
     }
   </style>
   <script src="https://unpkg.com/simple-peer@latest/simplepeer.min.js"></script>
@@ -63,18 +42,32 @@
   <div id="join-room">
     <h1>Bienvenido</h1>
     <input type="text" id="username" placeholder="Introduce tu nombre">
-    <button onclick="joinRoom()">Unirse a la Sala</button>
+    <button onclick="showRoomOptions()">Continuar</button>
   </div>
 
-  <div id="chat-room">
-    <h1>Sala de Chat</h1>
+  <div id="room-options" style="display: none;">
+    <h1>Elige una opción</h1>
+    <button onclick="showCreateRoom()">Crear mesa</button>
+    <button onclick="showJoinGame()">Entrar a jugar</button>
+  </div>
+
+  <div id="create-room" style="display: none;">
+    <h1>Crear mesa</h1>
+    <input type="text" id="room-name" placeholder="Nombre de la mesa">
+    <input type="password" id="room-password" placeholder="Contraseña">
+    <button onclick="createRoom()">Crear</button>
+  </div>
+
+  <div id="join-game" style="display: none;">
+    <h1>Entrar a jugar</h1>
+    <div id="room-list"></div>
+    <button onclick="fetchRooms()">Actualizar</button>
+  </div>
+
+  <div id="game-room">
+    <h1>Sala de Juego</h1>
     <video id="localVideo" autoplay></video>
     <video id="remoteVideo" autoplay></video>
-    <div id="messages"></div>
-    <div id="new-message">
-      <input type="text" id="message-input" placeholder="Escribe un mensaje">
-      <button onclick="sendMessage()">Enviar</button>
-    </div>
     <button onclick="leaveRoom()">Salir de la Sala</button>
   </div>
 
@@ -83,56 +76,76 @@
     let chatRoom;
     let localPeer;
     let localStream;
+    let currentRoom;
 
-    async function joinRoom() {
+    function showRoomOptions() {
       username = document.getElementById('username').value;
       if (username) {
         document.getElementById('join-room').style.display = 'none';
-        document.getElementById('chat-room').style.display = 'flex';
-
-        // Iniciar WebSocket
-        chatRoom = new WebSocket('ws://echo.websocket.org');
-        chatRoom.onmessage = function(event) {
-          const message = document.createElement('div');
-          message.textContent = event.data;
-          document.getElementById('messages').appendChild(message);
-        }
-
-        // Iniciar WebRTC
-        localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
-        document.getElementById('localVideo').srcObject = localStream;
-        localPeer = new SimplePeer({ initiator: location.hash === '#init', trickle: false, stream: localStream });
-
-        localPeer.on('signal', data => {
-          chatRoom.send(JSON.stringify(data));
-        });
-
-        localPeer.on('stream', stream => {
-          document.getElementById('remoteVideo').srcObject = stream;
-        });
-
-        chatRoom.onmessage = event => {
-          const data = JSON.parse(event.data);
-          localPeer.signal(data);
-        };
+        document.getElementById('room-options').style.display = 'flex';
       } else {
         alert('Por favor, introduce un nombre.');
       }
     }
 
-    function sendMessage() {
-      const messageInput = document.getElementById('message-input');
-      if (messageInput.value) {
-        const message = `${username}: ${messageInput.value}`;
-        chatRoom.send(message);
-        messageInput.value = '';
+    function showCreateRoom() {
+      document.getElementById('room-options').style.display = 'none';
+      document.getElementById('create-room').style.display = 'flex';
+    }
+
+    function showJoinGame() {
+      document.getElementById('room-options').style.display = 'none';
+      document.getElementById('join-game').style.display = 'flex';
+      fetchRooms();
+    }
+
+    function createRoom() {
+      const roomName = document.getElementById('room-name').value;
+      const roomPassword = document.getElementById('room-password').value;
+      if (roomName && roomPassword) {
+        currentRoom = roomName;
+        joinRoom();
+      } else {
+        alert('Por favor, introduce un nombre y una contraseña para la mesa.');
       }
+    }
+
+    function fetchRooms() {
+      // Esto es solo un placeholder para la lógica real de obtener las mesas disponibles.
+      const roomList = document.getElementById('room-list');
+      roomList.innerHTML = '<p>Lista de mesas disponibles (placeholder)</p>';
+    }
+
+    async function joinRoom() {
+      document.getElementById('create-room').style.display = 'none';
+      document.getElementById('join-game').style.display = 'none';
+      document.getElementById('game-room').style.display = 'flex';
+
+      // Iniciar WebRTC
+      localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+      document.getElementById('localVideo').srcObject = localStream;
+      localPeer = new SimplePeer({ initiator: location.hash === '#init', trickle: false, stream: localStream });
+
+      localPeer.on('signal', data => {
+        chatRoom.send(JSON.stringify(data));
+      });
+
+      localPeer.on('stream', stream => {
+        document.getElementById('remoteVideo').srcObject = stream;
+      });
+
+      // Iniciar WebSocket
+      chatRoom = new WebSocket('ws://echo.websocket.org');
+      chatRoom.onmessage = event => {
+        const data = JSON.parse(event.data);
+        localPeer.signal(data);
+      };
     }
 
     function leaveRoom() {
       chatRoom.close();
       localPeer.destroy();
-      document.getElementById('chat-room').style.display = 'none';
+      document.getElementById('game-room').style.display = 'none';
       document.getElementById('join-room').style.display = 'flex';
     }
   </script>
