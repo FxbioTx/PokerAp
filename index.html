@@ -3,15 +3,107 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Tu Sitio Web</title>
+  <title>Talky.io Clone</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      margin: 0;
+      background-color: #f4f4f4;
+    }
+    #join-room {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    input {
+      margin: 10px 0;
+      padding: 10px;
+      font-size: 16px;
+    }
+    button {
+      padding: 10px 20px;
+      font-size: 16px;
+      cursor: pointer;
+    }
+    #chat-room {
+      display: none;
+      flex-direction: column;
+      align-items: center;
+    }
+    #messages {
+      width: 80%;
+      max-width: 600px;
+      height: 400px;
+      overflow-y: scroll;
+      border: 1px solid #ccc;
+      margin: 10px 0;
+      padding: 10px;
+      background-color: white;
+    }
+    #new-message {
+      display: flex;
+      justify-content: space-between;
+      width: 80%;
+      max-width: 600px;
+    }
+  </style>
 </head>
 <body>
-  <h1>Bienvenido a tu sitio web</h1>
-  <p>Ingresa tu nombre para continuar:</p>
-  <form action="mesas.html">
-    <label for="nombre">Nombre:</label>
-    <input type="text" id="nombre" name="nombre" required>
-    <button type="submit">Ingresar</button>
-  </form>
+  <div id="join-room">
+    <h1>Bienvenido a Talky.io Clone</h1>
+    <input type="text" id="username" placeholder="Introduce tu nombre">
+    <button onclick="joinRoom()">Unirse a la Sala</button>
+  </div>
+
+  <div id="chat-room">
+    <h1>Sala de Chat</h1>
+    <div id="messages"></div>
+    <div id="new-message">
+      <input type="text" id="message-input" placeholder="Escribe un mensaje">
+      <button onclick="sendMessage()">Enviar</button>
+    </div>
+    <button onclick="leaveRoom()">Salir de la Sala</button>
+  </div>
+
+  <script>
+    let username;
+    let chatRoom;
+
+    function joinRoom() {
+      username = document.getElementById('username').value;
+      if (username) {
+        document.getElementById('join-room').style.display = 'none';
+        document.getElementById('chat-room').style.display = 'flex';
+        chatRoom = new WebSocket('ws://echo.websocket.org');
+        chatRoom.onmessage = function(event) {
+          const message = document.createElement('div');
+          message.textContent = event.data;
+          document.getElementById('messages').appendChild(message);
+        }
+      } else {
+        alert('Por favor, introduce un nombre.');
+      }
+    }
+
+    function sendMessage() {
+      const messageInput = document.getElementById('message-input');
+      if (messageInput.value) {
+        const message = `${username}: ${messageInput.value}`;
+        chatRoom.send(message);
+        messageInput.value = '';
+      }
+    }
+
+    function leaveRoom() {
+      chatRoom.close();
+      document.getElementById('chat-room').style.display = 'none';
+      document.getElementById('join-room').style.display = 'flex';
+    }
+  </script>
 </body>
 </html>
