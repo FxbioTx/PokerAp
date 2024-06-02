@@ -54,6 +54,7 @@
     <video id="localVideo" autoplay muted></video>
     <video id="remoteVideo" autoplay></video>
     <button onclick="leaveRoom()">Abandonar mesa</button>
+    <p id="lastToLeaveMessage" style="display: none;">La mesa se eliminará al salir.</p>
   </div>
 
   <script>
@@ -119,7 +120,8 @@
       const roomList = document.getElementById('room-list');
       roomList.innerHTML = '';
 
-      database.ref('rooms').once('value', snapshot => {
+      database.ref('rooms').on('value', snapshot => {
+        roomList.innerHTML = ''; // Clear the list
         snapshot.forEach(roomSnapshot => {
           const roomData = roomSnapshot.val();
           const roomItem = document.createElement('div');
@@ -168,10 +170,12 @@
       database.ref('rooms/' + currentRoom + '/signals').once('value', snapshot => {
         if (!snapshot.exists()) {
           database.ref('rooms/' + currentRoom).remove();
+          document.getElementById('lastToLeaveMessage').style.display = 'none';
         }
       });
       document.getElementById('game-room').style.display = 'none';
       document.getElementById('join-room').style.display = 'flex';
+      document.getElementById('lastToLeaveMessage').style.display = 'block';
     }
   </script>
 </body>
