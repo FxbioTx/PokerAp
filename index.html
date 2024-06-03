@@ -24,10 +24,10 @@
       padding: 10px;
       margin: 5px;
     }
-    #join-room, #room-options, #create-room, #join-game, #game-room {
+    #join-room, #create-room, #game-room {
       display: none;
     }
-    #room-options, #create-room, #join-game, #game-room {
+    #create-room, #game-room {
       flex-direction: column;
       gap: 10px;
     }
@@ -44,13 +44,7 @@
   <!-- Sección para unirse -->
   <div id="join-room" style="display: flex;">
     <input type="text" id="username" placeholder="Introduce tu nombre">
-    <button onclick="showRoomOptions()">Continuar</button>
-  </div>
-
-  <!-- Opciones de crear o unirse a una mesa -->
-  <div id="room-options" style="display: none;">
-    <button onclick="showCreateRoom()">Crear mesa de juego</button>
-    <button onclick="showJoinGame()">Entrar a jugar</button>
+    <button onclick="showCreateRoom()">Continuar</button>
   </div>
 
   <!-- Crear una mesa -->
@@ -60,14 +54,10 @@
     <button onclick="createRoom()">Crear</button>
   </div>
 
-  <!-- Unirse a un juego -->
-  <div id="join-game">
-    <div id="room-list"></div>
-  </div>
-
   <!-- Sala de juego -->
   <div id="game-room">
     <p>Estás en la mesa: <span id="current-room"></span></p>
+    <p>Comparte este enlace para que otros se unan: <span id="room-link"></span></p>
     <button onclick="leaveRoom()">Abandonar mesa</button>
     <p id="lastToLeaveMessage" style="display: none;">La mesa se eliminará al salir.</p>
     <div id="video-container">
@@ -97,25 +87,14 @@
     let currentRoom;
     let peer;
 
-    function showRoomOptions() {
+    function showCreateRoom() {
       username = document.getElementById('username').value;
       if (username) {
         document.getElementById('join-room').style.display = 'none';
-        document.getElementById('room-options').style.display = 'flex';
+        document.getElementById('create-room').style.display = 'flex';
       } else {
         alert('Por favor, introduce un nombre.');
       }
-    }
-
-    function showCreateRoom() {
-      document.getElementById('room-options').style.display = 'none';
-      document.getElementById('create-room').style.display = 'flex';
-    }
-
-    function showJoinGame() {
-      document.getElementById('room-options').style.display = 'none';
-      document.getElementById('join-game').style.display = 'flex';
-      fetchRooms();
     }
 
     function createRoom() {
@@ -136,34 +115,14 @@
       }
     }
 
-    function fetchRooms() {
-      const roomList = document.getElementById('room-list');
-      roomList.innerHTML = '';
-
-      database.ref('rooms').on('value', snapshot => {
-        roomList.innerHTML = ''; // Clear the list
-        snapshot.forEach(roomSnapshot => {
-          const roomData = roomSnapshot.val();
-          const roomItem = document.createElement('div');
-          roomItem.innerHTML = `
-            <p>${roomData.roomName}</p>
-            <button onclick="joinExistingRoom('${roomData.roomName}')">Unirse</button>
-          `;
-          roomList.appendChild(roomItem);
-        });
-      });
-    }
-
-    function joinExistingRoom(roomName) {
-      currentRoom = roomName;
-      joinRoom();
-    }
-
     function joinRoom() {
       document.getElementById('create-room').style.display = 'none';
-      document.getElementById('join-game').style.display = 'none';
       document.getElementById('game-room').style.display = 'flex';
       document.getElementById('current-room').innerText = currentRoom;
+
+      // Generar y mostrar enlace para unirse a la mesa
+      const roomLink = `${window.location.origin}${window.location.pathname}?room=${currentRoom}`;
+      document.getElementById('room-link').innerText = roomLink;
 
       // Configuración de WebRTC
       setupWebRTC();
@@ -217,6 +176,21 @@
 
     // Mostrar la pantalla inicial
     document.getElementById('join-room').style.display = 'flex';
+
+    // Verificar si se accede a un enlace de sala
+    const urlParams = new URLSearchParams(window.location.search);
+    const roomNameFromUrl = urlParams.get('room');
+    if (roomNameFromUrl) {
+      currentRoom = roomNameFromUrl;
+      const roomPassword = prompt('Introduce la contraseña de la mesa:');
+      database.ref('rooms/' + currentRoom).once('value').then(snapshot => {
+        if (snapshot.exists() && snapshot.val().roomPassword === roomPassword) {
+          joinRoom();
+        } else {
+          alert('Contraseña incorrecta o la mesa no existe.');
+        }
+      });
+    }
   </script>
 </body>
 </html>
