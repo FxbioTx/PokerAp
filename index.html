@@ -57,7 +57,6 @@
   <!-- Sala de juego -->
   <div id="game-room">
     <p>Estás en la mesa: <span id="current-room"></span></p>
-    <p>Comparte este enlace para que otros se unan: <span id="room-link"></span></p>
     <button onclick="leaveRoom()">Abandonar mesa</button>
     <p id="lastToLeaveMessage" style="display: none;">La mesa se eliminará al salir.</p>
     <div id="video-container">
@@ -119,10 +118,6 @@
       document.getElementById('create-room').style.display = 'none';
       document.getElementById('game-room').style.display = 'flex';
       document.getElementById('current-room').innerText = currentRoom;
-
-      // Generar y mostrar enlace para unirse a la mesa
-      const roomLink = `${window.location.origin}${window.location.pathname}?room=${currentRoom}`;
-      document.getElementById('room-link').innerText = roomLink;
 
       // Configuración de WebRTC
       setupWebRTC();
